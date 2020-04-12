@@ -3,9 +3,9 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>eamonnsullivan</groupId>
   <artifactId>github-search</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.1.0</version>
   <name>github-search</name>
-  <description>FIXME: my new library.</description>
+  <description>Search github for repos with topics.</description>
   <url>https://github.com/eamonnsullivan/github-search</url>
   <licenses>
     <license>

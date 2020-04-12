@@ -7,7 +7,7 @@ A small library for searching Github. Initially just provides methods for search
 You will need an environmental variable, called GITHUB_ACCESS_TOKEN, with a valid access token. At the moment, the access token needs read:org and repo permissions.
 
 ``` clojure
-(def result (get-repos "bbc" ["dpub" "10percent"]))
+(def result (get-repos "my-org" ["topic1" "topic2"]))
 (spit "repos.json" result)
 ```
 The JSON return will contain basic information about the repos found. For example:
