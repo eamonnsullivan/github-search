@@ -4,37 +4,26 @@ A small library for searching Github. Initially just provides methods for search
 
 ## Usage
 
-You will need an environmental variable, called GITHUB_ACCESS_TOKEN, with a valid access token. At the moment, the access token needs read:org and repo permissions.
-
 ``` clojure
-(def result (get-repos "my-org" ["topic1" "topic2"]))
-(spit "repos.json" result)
+(def result (get-repos (System/getenv "GITHUB_ACCESS_TOKEN") "my-org" ["topic1" "topic2"]))
+(spit "repos.end" result)
 ```
-The JSON return will contain basic information about the repos found. For example:
+The EDN returned will contain basic information about the repos found. For example:
 
-``` json
-[
-  {
-    "name": "cosmos-login",
-    "description": "Log in (ssh) directly to an instance of an application on a specified environment",
-    "url": "https://github.com/my-org/cosmos-login",
-    "sshUrl": "git@github.com:bbc/cosmos-login.git",
-    "languages": [ "Clojure" ]
-  },
-  {
-    "name": "other-repo",
-    "description": "A description",
-    "url": "https://github.com/my-org/other-repo",
-    "sshUrl": "git@github.com:bbc/other-repo.git",
-    "languages": [ "Scala" ]
-  },
-  {
-    "name": "another-project",
-    "description": "With a description",
-    "url": "https://github.com/my-org/another-project",
-    "sshUrl": "git@github.com:bbc/another-project.git",
-    "languages": [ "Javascript", "Python", "HTML" ]
-  }
+``` edn
+[{:name "project1",
+  :description
+  "A description",
+  :url "https://github.com/my-org/project1",
+  :sshUrl "git@github.com:my-org/project1.git",
+  :updatedAt "2020-04-09T11:01:55Z",
+  :languages ["Javascript" "Python" "HTML"]}
+ {:name "project2",
+  :description "A description for project2",
+  :url "https://github.com/my-org/project2",
+  :sshUrl "git@github.com:my-org/project2.git",
+  :updatedAt "2020-04-09T11:02:28Z",
+  :languages ["Clojure" "ClojureScript"]}
 ]
 ```
 

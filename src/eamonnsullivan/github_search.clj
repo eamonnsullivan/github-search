@@ -3,12 +3,12 @@
             [clj-http.client :as client]
             [clojure.data.json :as json]))
 
-(def secret-token (System/getenv "GITHUB_ACCESS_TOKEN"))
-
 (def ^:dynamic *page-size* 25)
 (def ^:dynamic *github-url* "https://api.github.com/graphql")
-(def ^:dynamic *request-opts* {:ssl? true :headers {"Authorization" (str "bearer " secret-token)}})
 
+(defn request-opts
+  [access-token]
+  {:ssl? true :headers {"Authorization" (str "bearer " access-token)}})
 
 (def repo-query "query($first:Int!, $after: String, $query: String!) {
   search(type:REPOSITORY, query:$query, first: $first, after: $after) {
@@ -19,6 +19,7 @@
         description
         url
         sshUrl
+        updatedAt
         languages(first: 10) {
           nodes {
             name
@@ -50,15 +51,15 @@
   (fix-languages (-> page :data :search :nodes)))
 
 (defn get-page-of-repos
-  [org topics page-size cursor]
+  [access-token org topics page-size cursor]
   (let [variables {:first page-size :query (get-query org topics) :after cursor}
         payload (json/write-str {:query repo-query :variables variables})
-        response (http-post *github-url* payload *request-opts*)]
+        response (http-post *github-url* payload (request-opts access-token))]
     (json/read-str (response :body) :key-fn keyword)))
 
 (defn get-all-pages
-  [org topics]
-  (let [page (get-page-of-repos org topics *page-size* nil)]
+  [access-token org topics]
+  (let [page (get-page-of-repos access-token org topics *page-size* nil)]
     (loop [page page
            result []]
       (let [pageInfo (-> page :data :search :pageInfo)
@@ -67,10 +68,10 @@
             result (concat result (get-nodes page))]
         (if-not has-next
           (into [] (concat result (get-nodes page)))
-          (recur (get-page-of-repos org topics *page-size* cursor)
+          (recur (get-page-of-repos access-token org topics *page-size* cursor)
                  (concat result (get-nodes page))))))))
 
 (defn get-repos
   "Get information about repos in a given organisation, with the specified topics"
-  [org topics]
-  (json/write-str (get-all-pages org topics)))
+  [access-token org topics]
+  (get-all-pages access-token org topics))

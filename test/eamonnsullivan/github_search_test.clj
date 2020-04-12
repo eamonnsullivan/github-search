@@ -42,7 +42,7 @@
 (deftest test-get-page-of-repos
   (with-redefs [sut/http-post (fn [_ _ _] post-response)]
     (testing "converts body to edn"
-      (let [result (sut/get-page-of-repos "test" ["test"] 7 nil)]
+      (let [result (sut/get-page-of-repos "secret-token" "test" ["test"] 7 nil)]
         (is (= 7 (-> result :data :search :repositoryCount)))
         (is (= "project1" (-> result :data :search :nodes first :name)))
         (is (= "A description for project one" (-> result :data :search :nodes first :description)))
@@ -50,11 +50,11 @@
         (is (= "project7" (-> result :data :search :nodes last :name)))))))
 
 (deftest test-get-all-pages
-  (with-redefs [sut/get-page-of-repos (fn [_ _ _ cursor]
+  (with-redefs [sut/get-page-of-repos (fn [_ _ _ _ cursor]
                                         (if cursor
                                           (json/read-str second-body :key-fn keyword)
                                           (json/read-str first-body :key-fn keyword)))]
     (testing "follows pages"
-      (let [result (sut/get-all-pages "test" ["test"])]
+      (let [result (sut/get-all-pages "secret-token" "test" ["test"])]
          (is (= "project8" (-> result last :name)))
         (is (= 16 (count result)))))))
