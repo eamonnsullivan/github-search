@@ -58,8 +58,8 @@
     (json/read-str (response :body) :key-fn keyword)))
 
 (defn get-all-pages
-  [access-token org topics]
-  (let [page (get-page-of-repos access-token org topics *page-size* nil)]
+  [access-token org topics page-size]
+  (let [page (get-page-of-repos access-token org topics page-size nil)]
     (loop [page page
            result []]
       (let [pageInfo (-> page :data :search :pageInfo)
@@ -67,11 +67,11 @@
             cursor (pageInfo :endCursor)
             result (concat result (get-nodes page))]
         (if-not has-next
-          (into [] (concat result (get-nodes page)))
-          (recur (get-page-of-repos access-token org topics *page-size* cursor)
-                 (concat result (get-nodes page))))))))
+          (into [] result)
+          (recur (get-page-of-repos access-token org topics page-size cursor)
+                 (get-nodes page)))))))
 
 (defn get-repos
   "Get information about repos in a given organisation, with the specified topics"
-  [access-token org topics]
-  (get-all-pages access-token org topics))
+  ([access-token org topics] (get-all-pages access-token org topics *page-size*))
+  ([access-token org topics page-size] (get-all-pages access-token org topics page-size)))

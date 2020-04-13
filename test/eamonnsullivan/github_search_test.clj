@@ -49,12 +49,54 @@
         (is (= "https://github.com/my-org/project1" (-> result :data :search :nodes first :url)))
         (is (= "project7" (-> result :data :search :nodes last :name)))))))
 
+(defn fake-paging-responses
+  [_ _ _ _ cursor]
+  (let [first-page {:data
+                    {:search
+                     {:repositoryCount 3
+                      :nodes [{:name "one"
+                               :description "..."
+                               :url "..."
+                               :sshUrl "..."
+                               :updatedAt "2020-04-09T11:02:28Z"
+                               :languages {:nodes [{:name "Javascript"}]}}
+                              {:name "two"
+                               :description "..."
+                               :url "..."
+                               :sshUrl "..."
+                               :updatedAt "2020-04-09T11:02:28Z"
+                               :languages {:nodes [{:name "Javascript"}]}}]
+                      :pageInfo {:hasNextPage true, :endCursor "cursor"}}}}
+        last-page {:data
+                    {:search
+                     {:repositoryCount 3
+                      :nodes [{:name "three"
+                               :description "..."
+                               :url "..."
+                               :sshUrl "..."
+                               :updatedAt "2020-04-09T11:02:28Z"
+                               :languages {:nodes [{:name "Javascript"}]}}]
+                      :pageInfo {:hasNextPage false, :endCursor "cursor2"}}}}]
+    (if-not cursor
+      first-page
+      last-page)))
+
 (deftest test-get-all-pages
-  (with-redefs [sut/get-page-of-repos (fn [_ _ _ _ cursor]
-                                        (if cursor
-                                          (json/read-str second-body :key-fn keyword)
-                                          (json/read-str first-body :key-fn keyword)))]
+  (with-redefs [sut/get-page-of-repos fake-paging-responses]
     (testing "follows pages"
-      (let [result (sut/get-all-pages "secret-token" "test" ["test"])]
-         (is (= "project8" (-> result last :name)))
-        (is (= 16 (count result)))))))
+      (let [result (sut/get-all-pages "secret-token" "test" ["test"] 2)]
+         (is (= "three" (-> result last :name)))
+         (is (= 3 (count result)))))))
+
+(defn fake-all-pages
+  [_ _ _ page-size]
+  (let [response {}]
+    (deftest testing-arguments
+      (testing "gets called with page-size set"
+        (is (= 2 page-size))))
+    response))
+
+(deftest testing-get-repos
+  (with-redefs [sut/get-all-pages fake-all-pages]
+    (testing "can override page-size"
+      (sut/get-repos "secret-token" "org" ["topic1" "topic2"] 2))))
