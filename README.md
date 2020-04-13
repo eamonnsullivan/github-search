@@ -37,6 +37,10 @@ To run tests:
 
     $ clj -A:test:runner
 
+To publish a version to Clojars:
+
+    $ mvn deploy:deploy-file -Dfile=github-search.jar -DpomFile=pom.xml -DrepositoryId=clojars -Durl=https://clojars.org/repo/
+
 ## License
 
 Copyright © 2020 Eamonn
