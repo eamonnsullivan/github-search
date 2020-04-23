@@ -3,8 +3,8 @@
             [clj-http.client :as client]
             [clojure.data.json :as json]))
 
-(def ^:dynamic *page-size* 25)
-(def ^:dynamic *github-url* "https://api.github.com/graphql")
+(def ^:dynamic *default-page-size* 25)
+(def github-url "https://api.github.com/graphql")
 
 (defn request-opts
   [access-token]
@@ -20,7 +20,7 @@
         url
         sshUrl
         updatedAt
-        languages(first: 10) {
+        languages(first: 2 orderBy:{field: SIZE, direction:DESC}) {
           nodes {
             name
           }
@@ -54,7 +54,7 @@
   [access-token org topics page-size cursor]
   (let [variables {:first page-size :query (get-query org topics) :after cursor}
         payload (json/write-str {:query repo-query :variables variables})
-        response (http-post *github-url* payload (request-opts access-token))]
+        response (http-post github-url payload (request-opts access-token))]
     (json/read-str (response :body) :key-fn keyword)))
 
 (defn get-all-pages
@@ -73,5 +73,5 @@
 
 (defn get-repos
   "Get information about repos in a given organisation, with the specified topics"
-  ([access-token org topics] (get-all-pages access-token org topics *page-size*))
+  ([access-token org topics] (get-all-pages access-token org topics *default-page-size*))
   ([access-token org topics page-size] (get-all-pages access-token org topics page-size)))
