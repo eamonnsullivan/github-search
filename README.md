@@ -6,7 +6,7 @@ A small library for searching Github. Initially just provides methods for search
 
 ``` clojure
 (def result (get-repos (System/getenv "GITHUB_ACCESS_TOKEN") "my-org" ["topic1" "topic2"]))
-(spit "repos.end" result)
+(spit "repos.edn" result)
 ```
 The EDN returned will contain basic information about the repos found. For example:
 
