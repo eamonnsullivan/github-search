@@ -1,4 +1,4 @@
-(ns eamonnsullivan.github-search)
+(ns eamonnsullivan.hello)
 
 (defn hello
   []

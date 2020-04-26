@@ -1,7 +1,9 @@
 (ns eamonnsullivan.github-search
-  (:require [clojure.string :as string]
-            [clj-http.client :as client]
-            [clojure.data.json :as json]))
+  (:require #?(:clj [clj-http.client :as client]
+               :cljs [cljs-http.client :as http])
+            #?(:cljs [cljs.core.async :refer [<!]])
+            [clojure.string :as string]
+            #?(:clj [clojure.data.json :as json])))
 
 (def ^:dynamic *default-page-size* 25)
 (def github-url "https://api.github.com/graphql")
@@ -36,7 +38,8 @@
 
 (defn http-post
   [url payload opts]
-  (client/post url (merge {:content-type :json :body payload} opts)))
+  #?(:clj (client/post url (merge {:content-type :json :body payload} opts))
+     :cljs (<! http/post url (merge {:content-type :json :body payload} opts))))
 
 (defn get-query
   [org topics]
@@ -50,12 +53,21 @@
   [page]
   (fix-languages (-> page :data :search :nodes)))
 
+#?(:clj defn get-payload
+   [query variables]
+   (json/write-str {:query query :variables variables}))
+
+#?(:cljs defn get-payload
+   [query variables]
+   (clj->js {:query query :variables variables}))
+
 (defn get-page-of-repos
   [access-token org topics page-size cursor]
   (let [variables {:first page-size :query (get-query org topics) :after cursor}
-        payload (json/write-str {:query repo-query :variables variables})
+        payload (get-payload repo-query variables)
         response (http-post github-url payload (request-opts access-token))]
-    (json/read-str (response :body) :key-fn keyword)))
+    #?(:clj (json/read-str (response :body) :key-fn keyword)
+       :cljs (js->clj (.parse js/JSON (response :body)) :keywordize-keys true))))
 
 (defn get-all-pages
   [access-token org topics page-size]
