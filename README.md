@@ -39,6 +39,7 @@ To run tests:
 
 To publish a version to Clojars:
 
+    $ clojure -A:jar
     $ mvn deploy:deploy-file -Dfile=github-search.jar -DpomFile=pom.xml -DrepositoryId=clojars -Durl=https://clojars.org/repo/
 
 ## License

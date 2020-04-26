@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>eamonnsullivan</groupId>
   <artifactId>github-search</artifactId>
-  <version>0.5.0</version>
+  <version>0.6.0</version>
   <name>github-search</name>
   <description>Search github for repos with topics.</description>
   <url>https://github.com/eamonnsullivan/github-search</url>

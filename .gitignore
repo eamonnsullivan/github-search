@@ -10,3 +10,6 @@
 .hgignore
 .hg/
 .cider-repl-history
+node_modules/
+out/
+.shadow-cljs/

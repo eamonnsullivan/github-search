@@ -1,0 +1,18 @@
+;; shadow-cljs configuration
+{:source-paths
+ ["src/cljs"
+  "test/cljs"]
+
+ :nrepl {:port 8777
+         :middleware []}
+
+ :dependencies
+ []
+
+ :builds
+ {:github-search
+  {:target :node-library
+   :verbose true
+   :output-to "out/github-search.js"
+   :output-dir "out"
+   :exports {:hello eamonnsullivan.github-search/hello}}}}
