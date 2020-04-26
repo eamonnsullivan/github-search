@@ -2,8 +2,8 @@
   (:require [clojure.test :refer [deftest is testing]]
             [eamonnsullivan.github-search :as sut]))
 
-(def first-body (slurp "./test/clj/eamonnsullivan/testresult.json"))
-(def second-body (slurp "./test/clj/eamonnsullivan/testresult2.json"))
+(def first-body (slurp "./test/eamonnsullivan/testresult.json"))
+(def second-body (slurp "./test/eamonnsullivan/testresult2.json"))
 (def post-response {:body first-body})
 
 (deftest test-get-query

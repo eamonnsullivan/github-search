@@ -16,4 +16,5 @@
    :output-to "out/hello.js"
    :output-dir "out"
    :exports {:hello eamonnsullivan.hello/hello
-             :hello-again eamonnsullivan.hello-again/hello-again}}}}
+             :hello-again eamonnsullivan.hello-again/hello-again
+             :get-repos eamonnsullivan.github-search/get-repos}}}}

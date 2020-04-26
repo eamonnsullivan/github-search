@@ -1,16 +1,20 @@
 (ns eamonnsullivan.github-search
   (:require #?(:clj [clj-http.client :as client]
                :cljs [cljs-http.client :as http])
-            #?(:cljs [cljs.core.async :refer [<!]])
+            #?(:cljs [cljs.nodejs :as nodejs])
+            #?(:cljs [cljs.core.async :refer [take! <!]])
             [clojure.string :as string]
-            #?(:clj [clojure.data.json :as json])))
+            #?(:clj [clojure.data.json :as json]))
+  #?(:cljs (:require-macros
+            [cljs.core.async.macros :refer [go]])))
 
 (def ^:dynamic *default-page-size* 25)
 (def github-url "https://api.github.com/graphql")
 
 (defn request-opts
   [access-token]
-  {:ssl? true :headers {"Authorization" (str "bearer " access-token)}})
+  #?(:clj {:ssl? true :headers {"Authorization" (str "bearer " access-token)}}
+     :cljs {:with-credentials? false :headers {"Authorization" (str "bearer " access-token)}}))
 
 (def repo-query "query($first:Int!, $after: String, $query: String!) {
   search(type:REPOSITORY, query:$query, first: $first, after: $after) {
@@ -39,7 +43,7 @@
 (defn http-post
   [url payload opts]
   #?(:clj (client/post url (merge {:content-type :json :body payload} opts))
-     :cljs (<! http/post url (merge {:content-type :json :body payload} opts))))
+     :cljs (go (<! (http/post url (merge {:content-type :json :body (clj->js payload)} opts))))))
 
 (defn get-query
   [org topics]
@@ -53,25 +57,32 @@
   [page]
   (fix-languages (-> page :data :search :nodes)))
 
-#?(:clj defn get-payload
+#?(:clj (defn get-payload
    [query variables]
-   (json/write-str {:query query :variables variables}))
+   (json/write-str {:query query :variables variables})))
 
-#?(:cljs defn get-payload
+#?(:cljs (set! js/XMLHttpRequest (nodejs/require "xhr2")))
+
+#?(:cljs (defn get-payload
    [query variables]
-   (clj->js {:query query :variables variables}))
+   (.stringify js/JSON (clj->js {:query query :variables variables}))))
 
 (defn get-page-of-repos
   [access-token org topics page-size cursor]
   (let [variables {:first page-size :query (get-query org topics) :after cursor}
         payload (get-payload repo-query variables)
         response (http-post github-url payload (request-opts access-token))]
+    (println "EAMONN DEBUG: payload:" payload )
     #?(:clj (json/read-str (response :body) :key-fn keyword)
-       :cljs (js->clj (.parse js/JSON (response :body)) :keywordize-keys true))))
+       :cljs (take! response
+                    (fn [r]
+                      (println "EAMONN DEBUG: body:"  (r :body))
+                      (r :body))))))
 
 (defn get-all-pages
   [access-token org topics page-size]
   (let [page (get-page-of-repos access-token org topics page-size nil)]
+    (println "EAMONN DEBUG: page:" page )
     (loop [page page
            result []]
       (let [pageInfo (-> page :data :search :pageInfo)
