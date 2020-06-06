@@ -13,7 +13,7 @@
 
 (defn request-opts
   [access-token]
-  #?(:clj {:ssl? true :headers {"Authorization" (str "bearer " access-token)}}
+  #?(:clj {:ssl? true :async? true :headers {"Authorization" (str "bearer " access-token)}}
      :cljs {:with-credentials? false :headers {"Authorization" (str "bearer " access-token)}}))
 
 (def repo-query "query($first:Int!, $after: String, $query: String!) {
@@ -41,9 +41,13 @@
 }")
 
 (defn http-post
-  [url payload opts]
-  #?(:clj (client/post url (merge {:content-type :json :body payload} opts))
-     :cljs (go (<! (http/post url (merge {:content-type :json :body (clj->js payload)} opts))))))
+  [url payload opts result]
+  #?(:clj (client/post url (merge {:content-type :json :body payload} opts)
+                       (fn [res] (deliver result res))
+                       (fn [ex] (println "exception is: " (.getMessage ex))))
+     :cljs (go
+             (let [response (<! (http/post url (merge {:content-type :json :body (clj->js payload)} opts)))]
+               (swap! result (partial response))))))
 
 (defn get-query
   [org topics]
@@ -58,21 +62,38 @@
   (fix-languages (-> page :data :search :nodes)))
 
 #?(:clj (defn get-payload
-   [query variables]
-   (json/write-str {:query query :variables variables})))
+          [query variables]
+          (json/write-str {:query query :variables variables})))
 
 #?(:cljs (set! js/XMLHttpRequest (nodejs/require "xhr2")))
 
 #?(:cljs (defn get-payload
-   [query variables]
-   (.stringify js/JSON (clj->js {:query query :variables variables}))))
+           [query variables]
+           (.stringify js/JSON (clj->js {:query query :variables variables}))))
+
+#?(:cljs (defn get-page-async
+           [access-token org topics page-size cursor callback]
+           (let [variables {:first page-size :query (get-query org topics) :after cursor}
+                 payload (get-payload repo-query variables)]
+             (go (let [response (<! (http-post github-url payload (request-opts access-token)))]
+                   (callback (response :body)))))))
+
+(defn get-response
+  [payload access-token result]
+  #?(:clj (let [result (promise)]
+            (http-post github-url payload (request-opts access-token) result)
+            @result)
+     :cljs (let [result (atom "")]
+             (http-post github-url payload (request-opts access-token) result)
+             (while (not= @result "")
+               (take! response (fn [r])))))
+     ))
 
 (defn get-page-of-repos
   [access-token org topics page-size cursor]
   (let [variables {:first page-size :query (get-query org topics) :after cursor}
         payload (get-payload repo-query variables)
-        response (http-post github-url payload (request-opts access-token))]
-    (println "EAMONN DEBUG: payload:" payload )
+        response (get-response payload access-token)]
     #?(:clj (json/read-str (response :body) :key-fn keyword)
        :cljs (take! response
                     (fn [r]
@@ -81,7 +102,8 @@
 
 (defn get-all-pages
   [access-token org topics page-size]
-  (let [page (get-page-of-repos access-token org topics page-size nil)]
+  (let [page #?(:clj (get-page-of-repos access-token org topics page-size nil)
+                :cljs (get-page-async access-token org topics page-size nil println))]
     (println "EAMONN DEBUG: page:" page )
     (loop [page page
            result []]

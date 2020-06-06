@@ -7,14 +7,12 @@
          :middleware []}
 
  :dependencies
- []
+ [[cljs-http "0.1.46"]]
 
  :builds
  {:github-search
   {:target :node-library
    :verbose true
-   :output-to "out/hello.js"
+   :output-to "out/index.js"
    :output-dir "out"
-   :exports {:hello eamonnsullivan.hello/hello
-             :hello-again eamonnsullivan.hello-again/hello-again
-             :get-repos eamonnsullivan.github-search/get-repos}}}}
+   :exports {:get-repos eamonnsullivan.github-search/get-repos}}}}

@@ -16,6 +16,6 @@
   :jar
   {:extra-deps {seancorfield/depstar {:mvn/version "0.5.1"}}
    :main-opts ["-m" "hf.depstar.jar" "github-search.jar"]}
-  :shadow-cljs
+  :compile-js
   {:extra-deps {thheller/shadow-cljs {:mvn/version "RELEASE"}}
-   :main-opts ["-m" "shadow.cljs.devtools.cli"]}}}
+   :main-opts ["-m" "shadow.cljs.devtools.cli" "compile" "github-search"]}}}
