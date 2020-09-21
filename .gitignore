@@ -9,4 +9,6 @@
 /.nrepl-port
 .hgignore
 .hg/
+.lsp/
+.clj-kondo/
 .cider-repl-history
